@@ -9,10 +9,28 @@ import requests
 
 def find_map(map_name):
     all_map = requests.get('https://api.brawlapi.com/v1/maps').json()
+    map_id = []
     for map in all_map['list']:
         if map_name == map['name']:
-            return map['id']
-    return None
+            map_id.append(map['id'])
+    return map_id
+
+
+def stats_map_get(id_map, mod_com):
+    map = requests.get(f'https://api.brawlapi.com/v1/maps/{id_map}').json()
+    str_vivod = ''
+    if mod_com == 'team':
+        stats = list(sorted(map['teamStats'], key=lambda x: x['data']['winRate']))[-5:][::-1]
+        for i in range(len(stats)):
+            str_promezh = f'{", ".join(stats[i]["hash"].split("+"))}:\nWin Rate: {str(stats[i]["data"]["winRate"])[:5]}\n\n'
+            str_vivod += str_promezh
+    else:
+        stats = list(sorted(map['stats'], key=lambda x: x['winRate']))[-10:][::-1]
+        for i in range(len(stats)):
+            brawler = requests.get(f'https://api.brawlapi.com/v1/brawlers/{stats[i]["brawler"]}').json()['name']
+            str_vivod += f'{brawler}\nWin Rate: {str(stats[i]["winRate"])[:5]}\n\n'
+
+    return str_vivod
 
 
 class FSMMap(StatesGroup):
@@ -29,16 +47,14 @@ async def cm_start(message : types.Message):
 #@dp.message_handler(state=FSMMap.map_id)
 async def map_n(message : types.Message, state : FSMContext):
     if message.text.lower() == 'назад':
-        await   bot.send_message(message.chat.id, 'Введите название карты(на английском)',
+        await bot.send_message(message.chat.id, 'Введите название карты(на английском)',
                                reply_markup=ReplyKeyboardRemove())
     async with state.proxy() as data:
-
-        if find_map(message.text) is None:
+        k = find_map(message.text)
+        if k == []:
             await bot.send_message(message.chat.id, 'Такой карты нет')
-
-            await FSMMap.previous()
         else:
-            data['map_id'] = find_map(message.text)
+            data['map_id'] = k
             await FSMMap.next()
             await bot.send_message(message.chat.id, 'Выбери на кого выдавать статистику', reply_markup=kb_ts)
 
@@ -51,7 +67,9 @@ async def t_s_map(message : types.Message, state : FSMContext):
                 data['team_solo_stats'] = 'team'
             else:
                 data['team_solo_stats'] = 'solo'
-            await bot.send_message(message.chat.id, str(data), reply_markup=ReplyKeyboardRemove())
+            if len(data['map_id']) == 1:
+                await bot.send_message(message.chat.id, stats_map_get(data['map_id'][0], data['team_solo_stats']),
+                                       reply_markup=ReplyKeyboardRemove())
             await state.finish()
         elif message.text.lower() == 'назад':
             await bot.send_message(message.chat.id, 'Введите название карты(на английском)',
