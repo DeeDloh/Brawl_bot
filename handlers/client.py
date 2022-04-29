@@ -2,9 +2,12 @@ from aiogram import Dispatcher, types
 from create_bot import bot, dp
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types  import ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardRemove
 from keyboards import kb_ts
+from functions.make_solo_map_st import image_braw_map
 import requests
+
+#-----------------------------Карты-----------------------------
 
 
 def find_map(map_name):
@@ -19,6 +22,7 @@ def find_map(map_name):
 def stats_map_get(id_map, mod_com):
     map = requests.get(f'https://api.brawlapi.com/v1/maps/{id_map}').json()
     str_vivod = ''
+    brawlers = []
     if mod_com == 'team':
         stats = list(sorted(map['teamStats'], key=lambda x: x['data']['winRate']))[-5:][::-1]
         for i in range(len(stats)):
@@ -27,10 +31,11 @@ def stats_map_get(id_map, mod_com):
     else:
         stats = list(sorted(map['stats'], key=lambda x: x['winRate']))[-10:][::-1]
         for i in range(len(stats)):
-            brawler = requests.get(f'https://api.brawlapi.com/v1/brawlers/{stats[i]["brawler"]}').json()['name']
-            str_vivod += f'{brawler}\nWin Rate: {str(stats[i]["winRate"])[:5]}\n\n'
+            brawler = requests.get(f'https://api.brawlapi.com/v1/brawlers/{stats[i]["brawler"]}').json()
+            brawlers.append(brawler['imageUrl2'])
+            str_vivod += f'{brawler["name"]}\nWin Rate: {str(stats[i]["winRate"])[:5]}\n\n'
 
-    return str_vivod
+    return (str_vivod, brawlers)
 
 
 class FSMMap(StatesGroup):
@@ -68,8 +73,11 @@ async def t_s_map(message : types.Message, state : FSMContext):
             else:
                 data['team_solo_stats'] = 'solo'
             if len(data['map_id']) == 1:
-                await bot.send_message(message.chat.id, stats_map_get(data['map_id'][0], data['team_solo_stats']),
-                                       reply_markup=ReplyKeyboardRemove())
+                inf = stats_map_get(data['map_id'][0], data['team_solo_stats'])
+                path_img = open(image_braw_map(inf[1]), 'rb')
+                await bot.send_photo(chat_id=message.chat.id, photo=path_img,
+                                     caption=inf[0],
+                                     reply_markup=ReplyKeyboardRemove())
             await state.finish()
         elif message.text.lower() == 'назад':
             await bot.send_message(message.chat.id, 'Введите название карты(на английском)',
@@ -81,7 +89,17 @@ async def t_s_map(message : types.Message, state : FSMContext):
 #@dp.message_handler()
 async def start(message : types.Message):
     await bot.send_message(message.from_user.id, 'Привет')
+#---------------------------------------------------------------
 
+
+#-----------------------------Игрок-----------------------------
+
+#---------------------------------------------------------------
+
+
+#-----------------------------Клубы-----------------------------
+
+#---------------------------------------------------------------
 
 def register_handlers_client(dp : Dispatcher):
     dp.register_message_handler(start, commands=['start'])

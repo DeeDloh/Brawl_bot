@@ -7,6 +7,6 @@ from brawlstats import Client
 
 storage = MemoryStorage()
 
-bs = Client(os.getenv('API_TOKEN'))
+#bs = Client(os.getenv('API_TOKEN'))
 bot = Bot(token=os.getenv('BOT_TOKEN'))
 dp = Dispatcher(bot, storage=storage)
