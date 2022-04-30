@@ -5,7 +5,9 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardRemove
 from keyboards import kb_ts
 from functions.make_image_map_st import image_solo_braw_map, image_team_braw_map
+from functions.make_player_card import make_player_card
 import requests
+import os
 
 #-----------------------------Карты-----------------------------
 
@@ -120,6 +122,24 @@ async def t_s_map(message : types.Message, state : FSMContext):
 
 
 #-----------------------------Игрок-----------------------------
+class FSMPlayer(StatesGroup):
+    playertag = State()
+
+# @dp.message_handler(commands='player')
+async def getting_playertag(message: types.Message):
+    await FSMPlayer.playertag.set()
+    await bot.send_message(message.chat.id, 'Введите тэг игрока (регистр и решётка не важны)')
+
+
+# @dp.message_handler(state=FSMPlayer.playertag)
+async def give_player_stats(message : types.Message, state: FSMContext):
+    card_making = make_player_card(message.text)
+    if card_making == 0:
+        await bot.send_message(message.chat.id, 'Некорректный тэг!')
+    else:
+        await bot.send_photo(chat_id=message.chat.id, photo=open(card_making, 'rb'))
+        os.remove(card_making)
+        await state.finish()
 
 #---------------------------------------------------------------
 
@@ -140,3 +160,5 @@ def register_handlers_client(dp : Dispatcher):
     dp.register_message_handler(cm_start, commands=['maps'])
     dp.register_message_handler(map_n, state=FSMMap.map_id)
     dp.register_message_handler(t_s_map, state=FSMMap.team_solo_stats)
+    dp.register_message_handler(getting_playertag, commands=['player'])
+    dp.register_message_handler(give_player_stats, state=FSMPlayer.playertag)

@@ -1,4 +1,4 @@
-# from create_bot import bs
+from create_bot import bs
 from PIL import Image, ImageDraw, ImageFont
 from brawlstats import Client
 from requests import get as reqget
@@ -7,16 +7,17 @@ from os import sep as ossep
 from functions.is_english import is_english
 from functions.end_of_season import trophies_statpoints_calc
 
-bs = Client('eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjI4YTMxOGY3LTAwMDAtYTFlYi03ZmExLTJjNzQzM2M2Y2NhNSJ9.eyJpc3MiOiJzdXBlcmNlbGwiLCJhdWQiOiJzdXBlcmNlbGw6Z2FtZWFwaSIsImp0aSI6IjA3NTdhMGJhLWQ5YjEtNGRkMi05MzJjLTNkZmY0ODhhNThmOCIsImlhdCI6MTY1MTE3MDY3OSwic3ViIjoiZGV2ZWxvcGVyL2U2MTYyMDE4LTkyNjAtYmI1NC1lZmFjLTYyOTUyMGRkM2FlYiIsInNjb3BlcyI6WyJicmF3bHN0YXJzIl0sImxpbWl0cyI6W3sidGllciI6ImRldmVsb3Blci9zaWx2ZXIiLCJ0eXBlIjoidGhyb3R0bGluZyJ9LHsiY2lkcnMiOlsiMzcuMTQ0LjEzMC43OSJdLCJ0eXBlIjoiY2xpZW50In1dfQ.H1xOsPjnWfXxuPtNZugb4CsS3apvTFxXpnQ9P5X5kPMNKLLPrNk_XK1sQTkvfZ0I9mHFytQatM9Kf2JH6tHpBw')
-
 
 def make_player_card(playertag):
     playertag = playertag.upper() if playertag[0] == '#' else '#' + playertag.upper()
-    player = bs.get_player(playertag)  # берём из API объект игрока
+    try:
+        player = bs.get_player(playertag)  # берём из API объект игрока
+    except Exception:
+        return 0
     icons = reqget('https://api.brawlapi.com/v1/icons').json()  # берем из другого API .json-файл со всеми иконками
 
-    en_font_path = abspath('../fonts/english.ttf').replace(ossep, '/')  # в этом абзаце готовим шрифты
-    ru_font_path = abspath('../fonts/russian.ttf').replace(ossep, '/')
+    en_font_path = abspath('./fonts/english.ttf').replace(ossep, '/')  # в этом абзаце готовим шрифты
+    ru_font_path = abspath('./fonts/russian.ttf').replace(ossep, '/')
     if is_english(player.name):       # выбираем, какой шрифт использовать для ника в зависимости от языка
         name_font = ImageFont.truetype(en_font_path, size=56, encoding='unic')
     else:
@@ -24,7 +25,7 @@ def make_player_card(playertag):
     tag_font = ImageFont.truetype(en_font_path, size=18, encoding='unic')  # остальные шрифты всегда английские
     stats_font = ImageFont.truetype(en_font_path, size=26, encoding='unic')
 
-    card = Image.open('../player_card_base.png').convert("RGBA")  # открываем основу для карточки игрока
+    card = Image.open('./player_card_base.png').convert("RGBA")  # открываем основу для карточки игрока
     draw = ImageDraw.Draw(card)
 
     try:
@@ -60,7 +61,10 @@ def make_player_card(playertag):
     draw.text((300, 640), str(starpoints), font=stats_font, fill='#cb5bff', anchor='mm')
     draw.text((485, 640), f'{len(brawlers)}/{len(bs.get_brawlers().raw_data)}', font=stats_font, fill='#1aa6f5', anchor='mm')  # отображаем кол-во разблокированных игроком бравлеров
 
-    card.save(f'player_{playertag[1:]}.png')  # сохраняем изображение
+    path = f'player_{playertag[1:]}.png'
+    card.save(path)  # сохраняем изображение
+    return path
 
 
-make_player_card(input())
+if __name__ == '__main__':
+    make_player_card(input())

@@ -2,9 +2,8 @@ import requests
 from PIL import Image
 
 
-
 def image_solo_braw_map(brawlers, uni_brawler):
-    map = Image.open('C:/Users/Kirill/Documents/GitHub/Brawl_bot/sample_solo_stats_3.png')
+    map = Image.open('./sample_solo_stats_3.png')
     link_image = requests.get(f'https://api.brawlapi.com/v1/brawlers/{uni_brawler}').json()['imageUrl2']
     image_uni = Image.open(requests.get(link_image, stream=True).raw).resize((251, 251))
     map.paste(image_uni, (475, 55))
@@ -17,8 +16,9 @@ def image_solo_braw_map(brawlers, uni_brawler):
     map.save(f'123.png')
     return f'123.png'
 
+
 def image_team_braw_map(brawlers, uni_brawler):
-    map = Image.open('C:/Users/Kirill/Documents/GitHub/Brawl_bot/sample_team_stats.png')
+    map = Image.open('./sample_team_stats.png')
     link_image = requests.get(f'https://api.brawlapi.com/v1/brawlers/{uni_brawler}').json()['imageUrl2']
     image_uni = Image.open(requests.get(link_image, stream=True).raw).resize((250, 250))
     map.paste(image_uni, (475, 55))

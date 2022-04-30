@@ -1,1 +1,2 @@
 from functions import make_image_map_st
+from functions import make_player_card
