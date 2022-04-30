@@ -125,6 +125,8 @@ def stats_showdown_duo_map_get(id_map):
             temp_spis.append(id_braw)
         brawlers.append(temp_spis)
     braw_uni = list(sorted(list(uni_braw.items()), key=lambda x: x[1])[::-1])[0][0]
+    vivod = requests.get(f'https://api.brawlapi.com/v1/brawlers/{braw_uni}').json()['name']
+    str_vivod = f'Универсальный игрок:\n{vivod}\n\n{str_vivod}'
     return (str_vivod, brawlers, braw_uni)
 
 
@@ -136,21 +138,23 @@ class FSMMap(StatesGroup):
 #@dp.message_handler(commands='Карты')
 async def cm_start(message : types.Message):
     await FSMMap.map_id.set()
-    await bot.send_message(message.chat.id, 'Введите название карты(на английском)', reply_markup=kb_back)
+    await bot.send_message(message.chat.id, 'Введите название карты (на английском)', reply_markup=kb_back)
 
 
 #@dp.message_handler(state=FSMMap.map_id)
 async def map_n(message : types.Message, state : FSMContext):
     if message.text.lower() == 'назад':
         await bot.send_message(message.chat.id, 'НАЗАД', reply_markup=kb_menu)
-    async with state.proxy() as data:
-        k = find_map(message.text)
-        if k == []:
-            await bot.send_message(message.chat.id, 'Такой карты нет')
-        else:
-            data['map_id'] = k
-            await FSMMap.next()
-            await bot.send_message(message.chat.id, 'Выбери на кого выдавать статистику', reply_markup=kb_ts)
+        await state.finish()
+    else:
+        async with state.proxy() as data:
+            k = find_map(message.text)
+            if k == []:
+                await bot.send_message(message.chat.id, 'Такой карты нет')
+            else:
+                data['map_id'] = k
+                await FSMMap.next()
+                await bot.send_message(message.chat.id, 'Выбери на кого выдавать статистику', reply_markup=kb_ts)
 
 
 #@dp.message_handler(state=FSMMap.team_solo_stats)
@@ -196,10 +200,11 @@ async def t_s_map(message : types.Message, state : FSMContext):
                     else:
                         inf = stats_showdown_duo_map_get(data['map_id'][1])
                         img_name = image_showdown_duo_braw_map(inf[1], inf[2], data['map_id'][1])
-                    os.remove(img_name)
+
                     path_img = open(img_name, 'rb')
                     await bot.send_photo(chat_id=message.chat.id, photo=path_img, caption=inf[0],
                                          reply_markup=kb_menu)
+                    os.remove(img_name)
             await state.finish()
         elif msg.lower() == 'назад':
             await bot.send_message(message.chat.id, 'Введите название карты(на английском)',
@@ -219,13 +224,16 @@ class FSMPlayer(StatesGroup):
 # @dp.message_handler(commands='player')
 async def getting_playertag(message: types.Message):
     await FSMPlayer.playertag.set()
-    await bot.send_message(message.chat.id, 'Введите тэг игрока (регистр и решётка не важны)')
+    await bot.send_message(message.chat.id, 'Введите тэг игрока (регистр и решётка не важны)', reply_markup=kb_back)
 
 
 # @dp.message_handler(state=FSMPlayer.playertag)
 async def give_player_stats(message : types.Message, state: FSMContext):
     card_making = make_player_card(message.text)
-    if card_making == 0:
+    if message.text.lower() == 'назад':
+        await bot.send_message(message.chat.id, 'НАЗАД', reply_markup=kb_menu)
+        await state.finish()
+    elif card_making == 0:
         await bot.send_message(message.chat.id, 'Некорректный тэг!')
     else:
         await bot.send_photo(chat_id=message.chat.id, photo=open(card_making, 'rb'))
@@ -259,7 +267,7 @@ async def all_msg(message : types.Message):
 
 
 def register_handlers_client(dp : Dispatcher):
-    dp.register_message_handler(start, commands=['start'])
+    dp.register_message_handler(start, commands=['start', 'help'])
     dp.register_message_handler(cm_start, commands=['map'])
     dp.register_message_handler(map_n, state=FSMMap.map_id)
     dp.register_message_handler(t_s_map, state=FSMMap.team_solo_stats)
