@@ -33,7 +33,10 @@ def make_player_card(playertag):
         card.paste(avatar.resize((150, 150)), (30, 30, 180, 180))  # отображаем аватарку
     except KeyError:  # API с иконками неофициальное, иконки могут добавляться с задержкой
         pass
-    draw.text((202, 28), player.name, font=name_font, fill='#' + player.name_color[4:])  # отображаем ник игрока
+    if player.name_color:
+        draw.text((202, 28), player.name, font=name_font, fill='#' + player.name_color[4:])  # отображаем ник игрока
+    else:
+        draw.text((202, 28), player.name, font=name_font, fill='#ffffff')  # по какой-то причине, если ник игкрока белый, api вообще не возвращет пункт с цветом ника, вместо того чтоб вернуть "#ffffff". это очень тупо
     draw.text((202, 99), playertag, font=tag_font, fill='#6C757D')  # отображаем тэг игрока
 
     if player.club:  # отображаем название клуба, в котором находится игрок
