@@ -2,7 +2,7 @@ from aiogram import Dispatcher, types
 from create_bot import bot, dp
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 from keyboards import kb_ts, kb_menu, kb_back
 from functions import image_solo_braw_map, image_team_braw_map, image_showdown_solo_braw_map,\
     image_showdown_duo_braw_map
@@ -228,9 +228,17 @@ async def give_player_stats(message : types.Message, state: FSMContext):
     if card_making == 0:
         await bot.send_message(message.chat.id, 'Некорректный тэг!')
     else:
-        await bot.send_photo(chat_id=message.chat.id, photo=open(card_making, 'rb'))
+        player_in_kb = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton('График изменения кол-ва трофеев',
+                                                                                  callback_data='send_graph'))
+        await bot.send_photo(chat_id=message.chat.id, photo=open(card_making, 'rb'), reply_markup=player_in_kb)
         os.remove(card_making)
         await state.finish()
+
+
+# @dp.callback_query_handler(text='send_graph', state=FSMPlayer.playertag)
+async def send_graph(callback : types.CallbackQuery):
+    await callback.message.answer_photo(photo=open(requests.get('https://share.brawlify.com/player-graph/' + FSMPlayer.playertag.state, stream=True).raw, 'rb'))
+    await callback.answer()
 
 #---------------------------------------------------------------
 
@@ -266,3 +274,4 @@ def register_handlers_client(dp : Dispatcher):
     dp.register_message_handler(getting_playertag, commands=['player'])
     dp.register_message_handler(give_player_stats, state=FSMPlayer.playertag)
     dp.register_message_handler(all_msg)
+    dp.register_callback_query_handler(send_graph, state=FSMPlayer.playertag)
