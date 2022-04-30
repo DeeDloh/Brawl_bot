@@ -1,0 +1,1 @@
+from functions import make_solo_map_st
