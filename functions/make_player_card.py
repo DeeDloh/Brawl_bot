@@ -25,7 +25,7 @@ def make_player_card(playertag):
     tag_font = ImageFont.truetype(en_font_path, size=18, encoding='unic')  # остальные шрифты всегда английские
     stats_font = ImageFont.truetype(en_font_path, size=26, encoding='unic')
 
-    card = Image.open('./player_card_base.png').convert("RGBA")  # открываем основу для карточки игрока
+    card = Image.open('./templates/player_card_base.png').convert("RGBA")  # открываем основу для карточки игрока
     draw = ImageDraw.Draw(card)
 
     try:
