@@ -20,8 +20,10 @@ def make_player_card(playertag):
     ru_font_path = abspath('./fonts/russian.ttf').replace(ossep, '/')
     if is_english(player.name):       # выбираем, какой шрифт использовать для ника в зависимости от языка
         name_font = ImageFont.truetype(en_font_path, size=56, encoding='unic')
+        name_y = 28
     else:
         name_font = ImageFont.truetype(ru_font_path, size=48, encoding='unic')
+        name_y = 34
     tag_font = ImageFont.truetype(en_font_path, size=18, encoding='unic')  # остальные шрифты всегда английские
     stats_font = ImageFont.truetype(en_font_path, size=26, encoding='unic')
 
@@ -34,7 +36,7 @@ def make_player_card(playertag):
     except KeyError:  # API с иконками неофициальное, иконки могут добавляться с задержкой
         pass
     if player.name_color:
-        draw.text((202, 28), player.name, font=name_font, fill='#' + player.name_color[4:])  # отображаем ник игрока
+        draw.text((202, name_y), player.name, font=name_font, fill='#' + player.name_color[4:])  # отображаем ник игрока
     else:
         draw.text((202, 28), player.name, font=name_font, fill='#ffffff')  # по какой-то причине, если ник игкрока белый, api вообще не возвращет пункт с цветом ника, вместо того чтоб вернуть "#ffffff". это очень тупо
     draw.text((202, 99), playertag, font=tag_font, fill='#6C757D')  # отображаем тэг игрока
